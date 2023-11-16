@@ -27,9 +27,9 @@ export default function Board() {
   if (winner) {
     status = `Winner : ${winner}`;
   } else {
-    status = `Next Player` + isNext ? "X" : "O";
+    status = `Next Player ` + (isNext ? "X" : "O");
+    console.log(isNext + status);
   }
-  console.log(winner);
 
   function handleClick(i: number) {
     const nextSqueres = squares;
@@ -38,6 +38,7 @@ export default function Board() {
     } else {
       nextSqueres[i] = "O";
     }
+    console.log(isNext);
 
     setSquares(nextSqueres);
     setIsNext(!isNext);
@@ -45,7 +46,7 @@ export default function Board() {
 
   return (
     <>
-      <div>Tour : {status}</div>
+      <div> {status}</div>
       <div className="container">
         <div className="board-row">
           <Square value={squares[0]} onSquareClick={() => handleClick(0)} />
