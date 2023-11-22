@@ -1,4 +1,4 @@
-import React, { ReactElement, useState } from "react";
+import React, { useEffect, useState } from "react";
 import "./App.css";
 
 interface squareInterface {
@@ -18,30 +18,43 @@ function Square({ value, onSquareClick }: squareInterface) {
   );
 }
 
-export default function Board() {
-  const [squares, setSquares] = useState<string[]>(Array(9).fill(null));
-  const [isNext, setIsNext] = useState<boolean>(true);
+interface boardInterface {
+  isNext: boolean;
+  squares: any;
+  onPlay: (val: any) => void;
+}
+function Board({ isNext, squares, onPlay }: boardInterface) {
+  // const [squares, setSquares] = useState<string[]>(Array(9).fill(null));
+  // const [isNext, setIsNext] = useState<boolean>(true);
+  const winner = calculateWinner(squares);
 
-  const winner: any = calculateWinner(squares);
   let status: string;
   if (winner) {
     status = `Winner : ${winner}`;
   } else {
     status = `Next Player ` + (isNext ? "X" : "O");
-    console.log(isNext + status);
   }
 
   function handleClick(i: number) {
-    const nextSqueres = squares;
+    if (winner) {
+      return;
+    }
+    // On créer un tableau de square a chaque coup
+    const nextSqueres = squares.slice();
+    console.log("Next Square avant : " + nextSqueres);
+
     if (isNext) {
       nextSqueres[i] = "X";
     } else {
       nextSqueres[i] = "O";
     }
-    console.log(isNext);
+    console.log("Nesxt History copie de square " + nextSqueres);
 
-    setSquares(nextSqueres);
-    setIsNext(!isNext);
+    onPlay(nextSqueres);
+    // console.log(isNext);
+
+    // setSquares(nextSqueres);
+    // setIsNext(!isNext);
   }
 
   return (
@@ -68,6 +81,68 @@ export default function Board() {
   );
 }
 
+export default function Game() {
+  const [history, setHistory] = useState<any>([Array(9).fill(null)]);
+  const [isNext, setIsNext] = useState<boolean>(false);
+
+  // On definie le tour
+  const [currentMove, setCurrentMove] = useState<number>(0);
+  const currentSquare = history[currentMove];
+
+  // const currentSquare = history[history.length - 1];
+
+  useEffect(() => {
+    console.log("History : " + history[0]);
+  }, [history]);
+
+  const move = history.map((value: string, index: number) => {
+    let des = "";
+    if (index > 0) {
+      des = `Coup n° ${index}`;
+    } else {
+      des = "Revenir au début";
+    }
+    return (
+      <li key={index}>
+        <button onClick={() => jumpTo(index)}>{des}</button>{" "}
+      </li>
+    );
+  });
+
+  function jumpTo(nextMove: any) {
+    // Mettre a jour le tour
+    setCurrentMove(nextMove);
+    // ??
+    setIsNext(nextMove % 2 !== 0);
+    console.log("nextMove % 2 !== 0" + (nextMove % 2 !== 0));
+  }
+
+  console.log("CurrentSquare : " + currentSquare);
+  // Récupérer la case du coup actuel
+
+  // HandlePlay doit mettre à jour le composant Game
+  function handlePlay(nextSquare: number) {
+    //Créer un tableau avec l'historique
+    const nextHistory = [...history.slice(0, currentMove + 1), nextSquare];
+    setHistory(nextHistory);
+    setCurrentMove(nextHistory.length - 1);
+
+    // Créer un nouveau tableau qui contient l'ancien et le nouveau tableau
+    // setHistory([...history, nexthistory]);
+    setIsNext(!isNext);
+  }
+
+  return (
+    <>
+      <Board isNext={isNext} squares={currentSquare} onPlay={handlePlay} />
+      <div className="game-info">
+        <ol>{move}</ol>
+      </div>
+    </>
+  );
+}
+
+//Fonctions
 function calculateWinner(squares: string[] | null[]) {
   const lines = [
     [0, 1, 2],
@@ -82,7 +157,12 @@ function calculateWinner(squares: string[] | null[]) {
 
   for (let i = 0; i < lines.length; i++) {
     const [a, b, c] = lines[i];
-    if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
+    if (
+      squares &&
+      squares[a] &&
+      squares[a] === squares[b] &&
+      squares[a] === squares[c]
+    ) {
       return squares[a];
     }
   }
